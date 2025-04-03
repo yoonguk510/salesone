@@ -1,12 +1,12 @@
 'use client';
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AuthLayout from '@/components/layouts/AuthLayout';
 import AuthForm from '@/components/auth/AuthForm';
 import { useAuth } from '@/context/AuthProvider';
 
-export default function LoginPage() {
+// Separate component to handle search params
+function LoginContent() {
   const { login, isAuthenticated } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -25,7 +25,6 @@ export default function LoginPage() {
     try {
       setError(null);
       const success = await login(username, password);
-
       if (success) {
         console.log('Login successful, redirecting to', callbackUrl);
         // Use replace instead of push for a cleaner navigation
@@ -44,15 +43,28 @@ export default function LoginPage() {
   };
 
   return (
+    <AuthForm
+      isLogin={true}
+      onSubmit={handleLogin}
+      error={error}
+    />
+  );
+}
+
+// Loading fallback component
+function LoginFallback() {
+  return <div>로딩 중...</div>;
+}
+
+export default function LoginPage() {
+  return (
     <AuthLayout
       title="세일즈원 로그인"
       description="계정 접속을 위해 로그인 정보를 입력해주세요"
     >
-      <AuthForm
-        isLogin={true}
-        onSubmit={handleLogin}
-        error={error}
-      />
+      <Suspense fallback={<LoginFallback />}>
+        <LoginContent />
+      </Suspense>
     </AuthLayout>
   );
 }
